@@ -14,8 +14,7 @@ LP1, LP2, LP3 = ({
     "load_use": False,
     "unload_use": False,
     "wafer_id_list": [],
-    "load_run_time": 0,
-    "unload_run_time": 0,
+    "run_time": 0,
 } for i in [1, 2, 3])
 
 Buffer = {
@@ -77,6 +76,7 @@ PM25 = {
     "reside": 0,
 }
 
+# 自定义：1进，2出
 LLOuter_1, LLOuter_2 = ({
     "name": "LLOuter_%d" % i,
     "capacity": 2,
@@ -99,64 +99,63 @@ LLInner = {
 ATR = [{
     "name": "ATR_%s" % i,
     "deal_time": 1,
-    "modules_set": {LP1['name'], LP2['name'], LP3['name'], PRE['name'], Buffer['name'],
-                    LLOuter_1['name'], LLOuter_2['name']},
+    "modules_list": [LP1, LP2, LP3, PRE, Buffer, LLOuter_1, LLOuter_2],
     "use": False,
     "wafer_id": 0,
     "run_time": 0,
-    "reside": 2,
+    "reside": 1,
 } for i in ['A', 'B']]
 
 VTR_1 = [{
     "name": "VTR_1%s" % i,
     "deal_time": 1,
-    "modules_set": {LLOuter_1['name'], LLOuter_2['name'], PM2['name'], PM3['name'],
-                    PM4['name'], Multi_PM['name'], LLInner['name']},
+    "modules_list": [LLOuter_1, LLOuter_2, PM2, PM3, PM4, Multi_PM, LLInner],
     "use": False,
     "wafer_id": 0,
     "run_time": 0,
-    "reside": 2,
+    "reside": 1,
 } for i in ['A', 'B']]
 
 VTR_2 = [{
     "name": "VTR_2%s" % i,
     "deal_time": 1,
-    "modules_set": {LLInner['name'], PM21['name'], PM22['name'], PM23['name'],
-                    PM24['name'], PM25['name']},
+    "modules_list": [LLInner, PM21, PM22, PM23, PM24, PM25],
     "use": False,
     "wafer_id": 0,
     "run_time": 0,
-    "reside": 2,
+    "reside": 1,
 } for i in ['A', 'B']]
 
 Wafer_num = 1000
 Wafer_list = [{}]
 Wafer_list.extend([
-    {"length": 11, "index": -1, "use": False} if i % 2 == 1 else
-    {"length": 13, "index": -1, "use": False} for i in range(1, 1001)
+    {"length": 11, "index": -1, "pick": False} if i % 2 == 1 else
+    {"length": 13, "index": -1, "pick": False} for i in range(1, 1001)
 ])
 
 Path1 = [
-    {LP1['name'], LP2['name'], LP3['name']},
-    {PRE['name']},
-    {LLOuter_1['name'], LLOuter_2['name']},
-    {PM2['name'], PM3['name']},
-    {Multi_PM['name']},
-    {LLInner['name']},
-    {PM21['name'], PM22['name']},
-    {PM23['name'], PM24['name']},
-    {LLInner['name']},
-    {LLOuter_1['name'], LLOuter_2['name']},
-    {LP1['name'], LP2['name'], LP3['name']},
+    [LP1, LP2, LP3],
+    [PRE],
+    [LLOuter_1, LLOuter_2],
+    [PM2, PM3],
+    [Multi_PM],
+    [LLInner],
+    [PM21, PM22],
+    [PM23, PM24],
+    [LLInner],
+    [LLOuter_1, LLOuter_2],
+    [LP1, LP2, LP3],
 ]
 
 Path2 = Path1[:8] + [
-    {PM25['name']},
-    {LLInner['name']},
-    {PM4['name']},
-    {LLOuter_1['name'], LLOuter_2['name']},
-    {LP1['name'], LP2['name'], LP3['name']},
+    [PM25],
+    [LLInner],
+    [PM4],
+    [LLOuter_1, LLOuter_2],
+    [LP1, LP2, LP3],
 ]
+
+Path = [Path2, Path1]
 
 
 if __name__ == "__main__":
@@ -164,5 +163,5 @@ if __name__ == "__main__":
     print(VTR_1)
     print(VTR_2)
     print(Path1)
-    # print(Path2)
+    print(Path2)
     # print(LP2['name'] in Path1[0])

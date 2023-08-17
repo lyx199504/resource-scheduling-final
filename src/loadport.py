@@ -22,13 +22,12 @@ class LoadPort(object):
 
     # LP装载
     def LP_load(self, LP):
-        wafer_id_list = list(range(1, 1001, 2)) + list(range(2, 1001, 2))
+        wafer_id_list = list(range(1, 1001, 2))# + list(range(2, 1001, 2))
         LP['load_use'] = True
         for i in wafer_id_list:
             if Wafer_list[i]['index'] == -1 and len(LP['wafer_id_list']) < LP['capacity']:
                 LP['wafer_id_list'].append(i)
                 Wafer_list[i]['index'] = 0
-                Wafer_list[i]['use'] = True
         print("[%s] [%s] [Load]" % (Real_time.strftime(Time_format), LP['name']))
 
     # 装载策略，两个装载，一个卸载，只要至少有两个空就装载
@@ -54,8 +53,6 @@ class LoadPort(object):
     # LP卸载
     def LP_unload(self, LP):
         LP['unload_use'] = True
-        for i in LP['wafer_id_list']:
-            Wafer_list[i]['use'] = True
         print("[%s] [%s] [Unload]" % (Real_time.strftime(Time_format), LP['name']))
 
     # 卸载策略，有加工完且满了就卸载
@@ -66,3 +63,23 @@ class LoadPort(object):
             self.LP_unload(LP2)
         if self.judge_LP_unload(LP3):
             self.LP_unload(LP3)
+
+    # 判断是否可pick
+    def judge_LP_pick(self):
+        pass
+
+    # 判断是否可place
+    def LP_place_strategy(self):
+        if LP1['unload_type'] and len(LP1['wafer_id_list']) < LP1['capacity']:
+            return LP1
+        if LP2['unload_type'] and len(LP2['wafer_id_list']) < LP2['capacity']:
+            return LP2
+        if LP3['unload_type'] and len(LP3['wafer_id_list']) < LP3['capacity']:
+            return LP3
+        if not LP1['wafer_id_list']:
+            return LP1
+        if not LP2['wafer_id_list']:
+            return LP2
+        if not LP3['wafer_id_list']:
+            return LP3
+        raise

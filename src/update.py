@@ -17,22 +17,21 @@ class UpdateModules(object):
     # 更新LP数据
     def update_LP(self, LP):
         if LP['load_use']:  # 更新装载
-            LP['load_run_time'] += 1
-        if LP['load_run_time'] == LP['load_time']:  # 装载处理完成，恢复数据，
-            LP['load_run_time'] = 0
-            LP['load_use'] = False
-            for i in LP['wafer_id_list']:
-                Wafer_list[i]['use'] = False
+            LP['run_time'] += 1
+            if LP['run_time'] == LP['load_time']:  # 装载处理完成，恢复数据，
+                LP['run_time'] = 0
+                LP['load_use'] = False
+                for i in LP['wafer_id_list']:
+                    Wafer_list[i]['pick'] = True
         if LP['unload_use']:  # 更新卸载
-            LP['unload_run_time'] += 1
-        if LP['unload_run_time'] == LP['unload_time']:  # 卸载处理完成，卸掉wafer_id，恢复数据
-            LP['unload_run_time'] = 0
-            LP['unload_use'] = False
-            LP['unload_type'] = False
-            for i in LP['wafer_id_list']:
-                Wafer_list[i]['index'] += 1
-                Wafer_list[i]['use'] = False
-            LP['wafer_id_list'] = []
+            LP['run_time'] += 1
+            if LP['run_time'] == LP['unload_time']:  # 卸载处理完成，卸掉wafer_id，恢复数据
+                LP['run_time'] = 0
+                LP['unload_use'] = False
+                LP['unload_type'] = False
+                for i in LP['wafer_id_list']:
+                    Wafer_list[i]['index'] += 1
+                LP['wafer_id_list'] = []
 
 
     # 更新各模块数据
