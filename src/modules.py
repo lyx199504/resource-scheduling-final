@@ -1,15 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import datetime
+
+Time_format = "%Y/%m/%d %H:%M:%S"
+Real_time = datetime.datetime.now()
 
 LP1, LP2, LP3 = ({
     "name": "LP%d" % i,
     "capacity": 25,
-    "load": 10,
-    "unload": 10,
-    "use": False,
+    "load_time": 10,
+    "unload_time": 10,
+    "unload_type": False,  # 当前的晶圆是否准备卸载
+    "load_use": False,
+    "unload_use": False,
     "wafer_id_list": [],
-    "load_time": 0,
-    "unload_time": 0,
+    "load_run_time": 0,
+    "unload_run_time": 0,
 } for i in [1, 2, 3])
 
 Buffer = {
@@ -124,10 +130,11 @@ VTR_2 = [{
 } for i in ['A', 'B']]
 
 Wafer_num = 1000
-Wafer_list = [{}] + [
-    {"length": 11, "index": -1, "done": False} if i % 2 == 1 else
-    {"length": 13, "index": -1, "done": False} for i in range(1, 1001)
-]
+Wafer_list = [{}]
+Wafer_list.extend([
+    {"length": 11, "index": -1, "use": False} if i % 2 == 1 else
+    {"length": 13, "index": -1, "use": False} for i in range(1, 1001)
+])
 
 Path1 = [
     {LP1['name'], LP2['name'], LP3['name']},
@@ -153,6 +160,9 @@ Path2 = Path1[:8] + [
 
 
 if __name__ == "__main__":
+    print(ATR)
+    print(VTR_1)
+    print(VTR_2)
     print(Path1)
-    print(Path2)
-    print(LP2['name'] in Path1[0])
+    # print(Path2)
+    # print(LP2['name'] in Path1[0])
