@@ -33,6 +33,10 @@ class UpdateModules(object):
                     Wafer_list[i]['index'] += 1
                 LP['wafer_id_list'] = []
 
+    def update_PRE(self):
+        if PRE['use']:
+            PRE['run_time'] += 1
+
 
     # 更新各模块数据
     def update(self):
@@ -40,3 +44,4 @@ class UpdateModules(object):
         self.update_LP(LP1)
         self.update_LP(LP2)
         self.update_LP(LP3)
+        self.update_PRE()

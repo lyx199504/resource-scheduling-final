@@ -1,59 +1,52 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import time
+import datetime
 
-from src.loadport import LoadPort
 from src.modules import *
+from src.loadport import LoadPort
+from src.robot import Robot
 from src.update import UpdateModules
 
 
 class Processing(object):
     def __init__(self):
-        self.time_format = "%Y/%m/%d %H:%M:%S"
         self.real_time = datetime.datetime.now()
-
-    # 判断PRE是否在使用
-    def judge_PRE_run(self):
-        if PRE['use']:
-            return True
-        return False
-
-    # 执行PRE
-    def PRE_run(self, id):
-        PRE['use'] = True
-        PRE['wafer_id'] = id
-
-    def pick_strategy(self):
-        wafer_id_list = range(1, 1001, 2) if Wafer_num > 500 else range(2, 1001, 2)
-        for i in wafer_id_list:
-            print(Wafer_list[i])
-            wafer = Wafer_list[i]
-            if wafer['index'] >= wafer['length'] - 1:
-                continue
-
-            print(Wafer_list[i])
-            exit()
+        self.wafer_num = 1000
 
     def solve(self):
-        while Wafer_num:
+        pick_LP = True
+        pick_LP_time = self.real_time
+
+        odd_pick = True
+
+        while self.wafer_num:
             # 先更新所有模块的运行时间等的数据
             UpdateModules.instance().update()
 
             # 装载
-            LoadPort.instance().LP_load_strategy()
+            LoadPort.instance().LP_load_strategy(self.real_time)
             # 卸载
-            LoadPort.instance().LP_unload_strategy()
+            LoadPort.instance().LP_unload_strategy(self.real_time)
 
-            # ATR
-
-
-
-            # print(LP1)
-            # print(LP2)
-            # print(LP3)
-
-            # time.sleep(1)
-
+            if self.wafer_num > 500:
+                if (self.real_time - pick_LP_time).seconds >= 30:
+                    pick_LP = True
+                    odd_pick = True
+                # 机械臂
+                pick_LP_done = Robot.instance().robot_strategy(pick_LP, self.real_time, self.wafer_num)
+                if pick_LP_done:
+                    self.wafer_num -= 1
+                    pick_LP = False
+                    if odd_pick:
+                        pick_LP_time = self.real_time
+                        pick_LP = True
+                        odd_pick = False
+            else:
+                if (self.real_time - pick_LP_time).seconds >= 60:
+                    pick_LP = True
+                pick_LP_done = Robot.instance().robot_strategy(pick_LP, self.real_time, self.wafer_num)
+                if pick_LP_done:
+                    pick_LP_time = self.real_time
 
             self.real_time += datetime.timedelta(seconds=1)
 

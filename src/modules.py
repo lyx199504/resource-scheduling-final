@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import datetime
+# import datetime
 
 Time_format = "%Y/%m/%d %H:%M:%S"
-Real_time = datetime.datetime.now()
+# Real_time = datetime.datetime.now()
 
 LP1, LP2, LP3 = ({
     "name": "LP%d" % i,
@@ -76,12 +76,12 @@ PM25 = {
     "reside": 0,
 }
 
-# 自定义：1进，2出
 LLOuter_1, LLOuter_2 = ({
     "name": "LLOuter_%d" % i,
     "capacity": 2,
     "in_time": 20,
     "out_time": 10,
+    "out_type": False,  # 当前的晶圆准备出去
     "use": False,
     "wafer_id_list": [],
     "run_time": 0,
@@ -126,10 +126,9 @@ VTR_2 = [{
     "reside": 1,
 } for i in ['A', 'B']]
 
-Wafer_num = 1000
 Wafer_list = [{}]
 Wafer_list.extend([
-    {"length": 11, "index": -1, "pick": False} if i % 2 == 1 else
+    {"length": 11, "index": -1, "pick": False} if i % 2 == 1 else  # pick为True则可以pick
     {"length": 13, "index": -1, "pick": False} for i in range(1, 1001)
 ])
 
