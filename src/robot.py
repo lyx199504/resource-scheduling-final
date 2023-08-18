@@ -21,6 +21,7 @@ class Robot(object):
         id = r['wafer_id']
         ix = Wafer_list[id]['index'] + 1
         mdl_list = Path[id%2][ix]
+        LLOuter_start = False
         if LP1 in mdl_list:
             LP = LoadPort.instance().LP_place_strategy()
             LP['unload_type'] = True
@@ -30,7 +31,6 @@ class Robot(object):
             if not PRE['use']:
                 PRE['use'] = True
                 PRE['wafer_id'] = id
-                Wafer_list[id]['index'] += 1
                 mdl_name = PRE['name']
             else:
                 raise
@@ -38,13 +38,18 @@ class Robot(object):
             if LP1 in Path[id%2][ix+1]:  # 出
                 LLOuter = LLOut.instance().out_place_strategy()
                 LLOuter['out_type'] = True
-                LLOuter['wafer_id_list'].append(id)
-                mdl_name = LLOuter['name']
             else:  # 进
                 LLOuter = LLOut.instance().in_place_strategy()
                 LLOuter['out_type'] = False
-                LLOuter['wafer_id_list'].append(id)
-                mdl_name = LLOuter['name']
+            LLOuter['wafer_id_list'].append(id)
+            if id%2 == 1:
+                if len(LLOuter['wafer_id_list']) == LLOuter['capacity']:
+                    LLOuter_start = True
+                    LLOuter['use'] = True
+            else:
+                LLOuter_start = True
+                LLOuter['use'] = True
+            mdl_name = LLOuter['name']
         elif PM2 in mdl_list:
             if not PM2['use']:
                 PM2['use'] = True
@@ -112,7 +117,7 @@ class Robot(object):
         r['use'] = False
         r['run_time'] = 0
         r['wafer_id'] = 0
-        return r['name'], id, mdl_name
+        return r['name'], id, mdl_name, LLOuter_start
 
     # 急需pick的策略
     def pick_urgent_strategy(self, r):
@@ -152,18 +157,19 @@ class Robot(object):
         return "", 0, ""
 
     # 紧急操作策略
-    def robot_urgent_strategy(self, r, real_time):
+    def robot_urgent_strategy(self, r, real_time, result_list):
         pick = False
+        LLOuter_start = False
         if r[0]['use'] and r[1]['use']:
             if r[0]['run_time'] > r[1]['run_time']:
-                r_name, id, mdl_name = self.place_strategy(r[0])
+                r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[0])
             else:
-                r_name, id, mdl_name = self.place_strategy(r[1])
+                r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[1])
         else:
             if r[0]['use'] and r[0]['run_time'] - r[0]['deal_time'] == r[0]['reside']:
-                r_name, id, mdl_name = self.place_strategy(r[0])
+                r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[0])
             elif r[1]['use'] and r[1]['run_time'] - r[1]['deal_time'] == r[1]['reside']:
-                r_name, id, mdl_name = self.place_strategy(r[1])
+                r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[1])
             else:
                 if not r[0]['use']:
                     r_name, id, mdl_name = self.pick_urgent_strategy(r[0])
@@ -173,24 +179,26 @@ class Robot(object):
                     pick = True
                 else:
                     if r[0]['use']:
-                        r_name, id, mdl_name = self.place_strategy(r[0])
+                        r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[0])
                     elif r[1]['use']:
-                        r_name, id, mdl_name = self.place_strategy(r[1])
+                        r_name, id, mdl_name, LLOuter_start = self.place_strategy(r[1])
                     else:
                         mdl_name = ""
         if mdl_name:
             if pick:
-                print("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
+                result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
             else:
-                print("[%s] [%s] [Piace] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
+                result_list.append("[%s] [%s] [Place] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
+                if LLOuter_start:
+                    result_list.append("[%s] [%s] [Start]" % (real_time.strftime(Time_format), mdl_name))
         return mdl_name
 
     #
-    def robot_strategy(self, pick_LP, real_time, wafer_num):
+    def robot_strategy(self, pick_LP, real_time, result_list):
         # 先紧急pick和紧急place，再非紧急place
-        ATR_mdl_name = self.robot_urgent_strategy(ATR, real_time)
-        VTR1_mdl_name = self.robot_urgent_strategy(VTR_1, real_time)
-        VTR2_mdl_name = self.robot_urgent_strategy(VTR_2, real_time)
+        ATR_mdl_name = self.robot_urgent_strategy(ATR, real_time, result_list)
+        VTR1_mdl_name = self.robot_urgent_strategy(VTR_1, real_time, result_list)
+        VTR2_mdl_name = self.robot_urgent_strategy(VTR_2, real_time, result_list)
 
         # 默认机械臂不撞模块，撞了再改
         if ATR_mdl_name and ATR_mdl_name == VTR1_mdl_name or VTR1_mdl_name and VTR1_mdl_name == VTR2_mdl_name \
@@ -205,9 +213,8 @@ class Robot(object):
         if VTR2_mdl_name:
             VTR2_output = False
 
-
         # 非紧急pick的策略
-        # 先拿奇数晶圆，30s两个，后拿偶数晶圆，60s一个
+        # 先拿奇数晶圆，约30s两个，后拿偶数晶圆，约60s一个
         atr, vtr1, vtr2 = None, None, None
         pick_LP_done = False
 
@@ -233,61 +240,70 @@ class Robot(object):
         if not VTR1_mdl_name:
             vtr1 = VTR_1[0] if not VTR_1[0]['use'] else VTR_1[1]
             if LLInner['name'] not in [ATR_mdl_name, VTR2_mdl_name]:
-                for i, id in enumerate(LLInner['wafer_id_list']):
-                    ix = Wafer_list[id]['index']
-                    if ix == 5:  # 加工路径中下标第5个
-                        continue
-                    if LLInner['run_time_list'][i] < LLInner['deal_time']:
-                        continue
-                    LLInner['wafer_id_list'].pop(i)
-                    LLInner['run_time_list'].pop(i)
-                    vtr1['use'] = True
-                    vtr1['run_time'] = 0
-                    vtr1['wafer_id'] = id
-                    Wafer_list[id]['pick'] = False
-                    VTR1_mdl_name = LLInner['name']
-                    break
+                conflict = False
+                for pm in [PM2, PM3, PM4]:
+                    if pm['deal_time'] - pm['run_time'] == 1:
+                        conflict = True
+                if not conflict:
+                    for i, id in enumerate(LLInner['wafer_id_list']):
+                        ix = Wafer_list[id]['index']
+                        if ix == 5:  # 加工路径中下标第5个
+                            continue
+                        if LLInner['run_time_list'][i] < LLInner['deal_time']:
+                            continue
+                        LLInner['wafer_id_list'].pop(i)
+                        LLInner['run_time_list'].pop(i)
+                        vtr1['use'] = True
+                        vtr1['run_time'] = 0
+                        vtr1['wafer_id'] = id
+                        Wafer_list[id]['pick'] = False
+                        VTR1_mdl_name = LLInner['name']
+                        break
 
         if not VTR2_mdl_name:
             vtr2 = VTR_2[0] if not VTR_2[0]['use'] else VTR_2[1]
             if LLInner['name'] not in [ATR_mdl_name, VTR1_mdl_name]:
-                for i, id in enumerate(LLInner['wafer_id_list']):
-                    ix = Wafer_list[id]['index']
-                    if ix != 5:  # 加工路径中下标第5个
-                        continue
-                    if LLInner['run_time_list'][i] < LLInner['deal_time']:
-                        continue
-                    # if id%2 == 0:
-                    #     pick = True
-                    #     for pm in Path2[ix+1]:
-                    #         if pm['use']:
-                    #             pick = False
-                    #     for pm in Path2[ix+2]:
-                    #         if pm['use']:
-                    #             pick = False
-                    #     if not pick:
-                    #         break
-                    LLInner['wafer_id_list'].pop(i)
-                    LLInner['run_time_list'].pop(i)
-                    vtr2['use'] = True
-                    vtr2['run_time'] = 0
-                    vtr2['wafer_id'] = id
-                    Wafer_list[id]['pick'] = False
-                    VTR2_mdl_name = LLInner['name']
-                    break
+                conflict = False
+                for pm in [PM21, PM22, PM23, PM24, PM25]:
+                    if pm['deal_time'] - pm['run_time'] == 1:
+                        conflict = True
+                if not conflict:
+                    for i, id in enumerate(LLInner['wafer_id_list']):
+                        ix = Wafer_list[id]['index']
+                        if ix != 5:  # 加工路径中下标第5个
+                            continue
+                        if LLInner['run_time_list'][i] < LLInner['deal_time']:
+                            continue
+                        LLInner['wafer_id_list'].pop(i)
+                        LLInner['run_time_list'].pop(i)
+                        vtr2['use'] = True
+                        vtr2['run_time'] = 0
+                        vtr2['wafer_id'] = id
+                        Wafer_list[id]['pick'] = False
+                        VTR2_mdl_name = LLInner['name']
+                        break
 
         if not VTR1_mdl_name:
             vtr1 = VTR_1[0] if not VTR_1[0]['use'] else VTR_1[1]
             if Multi_PM['name'] not in [ATR_mdl_name, VTR2_mdl_name] and \
                     Multi_PM['wafer_id_list'] and Multi_PM['run_time_list'][0] >= Multi_PM['deal_time']:
-                id = Multi_PM['wafer_id_list'][0]
-                Multi_PM['wafer_id_list'].pop(0)
-                Multi_PM['run_time_list'].pop(0)
-                vtr1['use'] = True
-                vtr1['run_time'] = 0
-                vtr1['wafer_id'] = id
-                Wafer_list[id]['pick'] = False
-                VTR1_mdl_name = Multi_PM['name']
+                conflict = False
+                for r in VTR_2:
+                    if r['use']:
+                        i = r['wafer_id']
+                        mdl_list = Path[i%2][Wafer_list[i]['index'] + 1]
+                        if len(mdl_list) == 1 and mdl_list[0] == LLInner:
+                            conflict = True
+                            break
+                if not conflict:
+                    id = Multi_PM['wafer_id_list'][0]
+                    Multi_PM['wafer_id_list'].pop(0)
+                    Multi_PM['run_time_list'].pop(0)
+                    vtr1['use'] = True
+                    vtr1['run_time'] = 0
+                    vtr1['wafer_id'] = id
+                    Wafer_list[id]['pick'] = False
+                    VTR1_mdl_name = Multi_PM['name']
 
         if not ATR_mdl_name:
             atr = ATR[0] if not ATR[0]['use'] else ATR[1]
@@ -311,9 +327,7 @@ class Robot(object):
         if not ATR_mdl_name:
             atr = ATR[0] if not ATR[0]['use'] else ATR[1]
             if pick_LP and not PRE['use']:
-                print(atr['wafer_id'])
-                LP = LoadPort.instance().LP_pick_strategy(wafer_num)
-                print(LP)
+                LP = LoadPort.instance().LP_pick_strategy()
                 if LP is not None:
                     id = LP['wafer_id_list'][0]
                     atr['use'] = True
@@ -322,15 +336,16 @@ class Robot(object):
                     LP['wafer_id_list'].pop(0)
                     if not LP['wafer_id_list']:
                         LP['run_time'] = 0
+                        LP['load_use'] = False
                     ATR_mdl_name = LP['name']
                     pick_LP_done = True
 
         if ATR_mdl_name and ATR_output:
-            print("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), atr['name'], atr['wafer_id'], ATR_mdl_name))
+            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), atr['name'], atr['wafer_id'], ATR_mdl_name))
         if VTR1_mdl_name and VTR1_output:
-            print("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr1['name'], vtr1['wafer_id'], VTR1_mdl_name))
+            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr1['name'], vtr1['wafer_id'], VTR1_mdl_name))
         if VTR2_mdl_name and VTR2_output:
-            print("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr2['name'], vtr2['wafer_id'], VTR2_mdl_name))
+            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr2['name'], vtr2['wafer_id'], VTR2_mdl_name))
 
         return pick_LP_done
 

@@ -22,7 +22,7 @@ class LLOut(object):
         return False
 
     def judge_in_pick(self, mdl):
-        if not mdl['out_type'] and mdl['run_time'] >= mdl['out_time']:
+        if not mdl['out_type'] and mdl['run_time'] >= mdl['in_time']:
             return True
         return False
 
