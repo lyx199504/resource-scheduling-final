@@ -2,6 +2,8 @@ import datetime
 import time
 import os
 
+from src.processing import Processing
+
 if __name__ == '__main__':
     # RES_PATH = os.environ['RES_PATH']
     RES_PATH = "./"
@@ -10,6 +12,10 @@ if __name__ == '__main__':
     """
     算法求解逻辑代码，操作序列result.txt保存到RES_PATH目录下
     """
+    pro = Processing()
+    result_list = pro.solve()
+    with open(RES_PATH + "result.txt", "w") as f:
+        f.writelines("\n".join(result_list))
 
     ###############
     t2 = datetime.datetime.now()
