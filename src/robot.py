@@ -38,17 +38,16 @@ class Robot(object):
             if LP1 in Path[id%2][ix+1]:  # 出
                 LLOuter = LLOut.instance().out_place_strategy()
                 LLOuter['out_type'] = True
+                LLOuter['wafer_id_list'].append(id)
+                LLOuter_start = True
+                LLOuter['use'] = True
             else:  # 进
                 LLOuter = LLOut.instance().in_place_strategy()
                 LLOuter['out_type'] = False
-            LLOuter['wafer_id_list'].append(id)
-            if id%2 == 1:
+                LLOuter['wafer_id_list'].append(id)
                 if len(LLOuter['wafer_id_list']) == LLOuter['capacity']:
                     LLOuter_start = True
                     LLOuter['use'] = True
-            else:
-                LLOuter_start = True
-                LLOuter['use'] = True
             mdl_name = LLOuter['name']
         elif PM2 in mdl_list:
             if not PM2['use']:
@@ -200,7 +199,7 @@ class Robot(object):
         VTR1_mdl_name = self.robot_urgent_strategy(VTR_1, real_time, result_list)
         VTR2_mdl_name = self.robot_urgent_strategy(VTR_2, real_time, result_list)
 
-        # 默认机械臂不撞模块，撞了再改
+        # 检查不同的机械臂是否撞模块，撞了则抛异常，下面pick策略会控制不撞模块
         if ATR_mdl_name and ATR_mdl_name == VTR1_mdl_name or VTR1_mdl_name and VTR1_mdl_name == VTR2_mdl_name \
                 or ATR_mdl_name and ATR_mdl_name == VTR2_mdl_name:
             raise
@@ -214,10 +213,10 @@ class Robot(object):
             VTR2_output = False
 
         # 非紧急pick的策略
-        # 先拿奇数晶圆，约30s两个，后拿偶数晶圆，约60s一个
         atr, vtr1, vtr2 = None, None, None
         pick_LP_done = False
 
+        # pick LLOuter准备出仓的晶圆
         if not ATR_mdl_name:
             atr = ATR[0] if not ATR[0]['use'] else ATR[1]
             if LLOuter_1['name'] not in [VTR1_mdl_name, VTR2_mdl_name] and LLOut.instance().judge_out_pick(LLOuter_1):
@@ -237,10 +236,11 @@ class Robot(object):
                     LLOuter_2['run_time'] = 0
                 ATR_mdl_name = LLOuter_2['name']
 
+        # pick LLInner准备出仓的晶圆
         if not VTR1_mdl_name:
             vtr1 = VTR_1[0] if not VTR_1[0]['use'] else VTR_1[1]
             if LLInner['name'] not in [ATR_mdl_name, VTR2_mdl_name]:
-                conflict = False
+                conflict = False  # 如果下一秒存在紧急的PM，则先不pick
                 for pm in [PM2, PM3, PM4]:
                     if pm['deal_time'] - pm['run_time'] == 1:
                         conflict = True
@@ -260,10 +260,11 @@ class Robot(object):
                         VTR1_mdl_name = LLInner['name']
                         break
 
+        # pick LLInner准备入仓的晶圆
         if not VTR2_mdl_name:
             vtr2 = VTR_2[0] if not VTR_2[0]['use'] else VTR_2[1]
             if LLInner['name'] not in [ATR_mdl_name, VTR1_mdl_name]:
-                conflict = False
+                conflict = False  # 如果下一秒存在紧急的PM，则先不pick
                 for pm in [PM21, PM22, PM23, PM24, PM25]:
                     if pm['deal_time'] - pm['run_time'] == 1:
                         conflict = True
@@ -283,8 +284,10 @@ class Robot(object):
                         VTR2_mdl_name = LLInner['name']
                         break
 
+        # pick Multi_PM的晶圆
         if not VTR1_mdl_name:
             vtr1 = VTR_1[0] if not VTR_1[0]['use'] else VTR_1[1]
+            # 如果有其他机械臂需要place，则先不pick
             if Multi_PM['name'] not in [ATR_mdl_name, VTR2_mdl_name] and \
                     Multi_PM['wafer_id_list'] and Multi_PM['run_time_list'][0] >= Multi_PM['deal_time']:
                 conflict = False
@@ -305,6 +308,7 @@ class Robot(object):
                     Wafer_list[id]['pick'] = False
                     VTR1_mdl_name = Multi_PM['name']
 
+        # pick LLOuter准备入仓的晶圆
         if not ATR_mdl_name:
             atr = ATR[0] if not ATR[0]['use'] else ATR[1]
             if LLOuter_1['name'] not in [VTR1_mdl_name, VTR2_mdl_name] and LLOut.instance().judge_in_pick(LLOuter_1):
@@ -324,6 +328,7 @@ class Robot(object):
                     LLOuter_2['run_time'] = 0
                 ATR_mdl_name = LLOuter_2['name']
 
+        # pick LP的晶圆
         if not ATR_mdl_name:
             atr = ATR[0] if not ATR[0]['use'] else ATR[1]
             if pick_LP and not PRE['use']:

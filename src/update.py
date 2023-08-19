@@ -36,14 +36,20 @@ class UpdateModules(object):
     def update_PM(self, pm):
         if pm['use']:
             pm['run_time'] += 1
+            if pm['run_time'] - pm['deal_time'] > pm['reside']:
+                raise
 
     def updata_Multi_PM(self):
         for i in range(len(Multi_PM['run_time_list'])):
             Multi_PM['run_time_list'][i] += 1
+            if Multi_PM['run_time_list'][i] - Multi_PM['deal_time'] > Multi_PM['reside']:
+                raise
 
     def updata_LLInner(self):
         for i in range(len(LLInner['run_time_list'])):
             LLInner['run_time_list'][i] += 1
+            if LLInner['run_time_list'][i] - LLInner['deal_time'] > LLInner['reside']:
+                raise
 
     def update_LLOuter(self, LLOuter, real_time, result_list):
         if LLOuter['use']:
@@ -57,8 +63,8 @@ class UpdateModules(object):
         for i in range(len(r)):
             if r[i]['use']:
                 r[i]['run_time'] += 1
-            if r[i]['run_time'] - r[i]['deal_time'] > r[i]['reside']:
-                raise
+                if r[i]['run_time'] - r[i]['deal_time'] > r[i]['reside']:
+                    raise
 
     # 更新各模块数据
     def update(self, real_time, result_list):

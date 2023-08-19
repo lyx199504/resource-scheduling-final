@@ -22,8 +22,7 @@ class LoadPort(object):
 
     # LP装载
     def LP_load(self, LP, real_time, result_list):
-        wafer_id_list = list(range(1, 1001, 2)) + list(range(2, 1001, 2))
-        for i in wafer_id_list:
+        for i in range(1, 1001):
             if Wafer_list[i]['index'] == -1 and len(LP['wafer_id_list']) < LP['capacity']:
                 LP['wafer_id_list'].append(i)
                 Wafer_list[i]['index'] = 0
@@ -72,37 +71,15 @@ class LoadPort(object):
 
     # pick策略
     def LP_pick_strategy(self):
-        odd = False
-        if not LP1['unload_type'] and LP1['wafer_id_list'] and LP1['wafer_id_list'][0]%2 == 1:
-            odd = True
-        if not odd:
-            if not LP2['unload_type'] and LP2['wafer_id_list'] and LP2['wafer_id_list'][0]%2 == 1:
-                odd = True
-        if not odd:
-            if not LP3['unload_type'] and LP3['wafer_id_list'] and LP3['wafer_id_list'][0]%2 == 1:
-                odd = True
         LP = None
-        if odd:
-            if not LP1['unload_type'] and not LP1['load_use'] and LP1['wafer_id_list']:
-                if LP1['wafer_id_list'][0]%2 == 1:
-                    LP = LP1
-            if not LP2['unload_type'] and not LP2['load_use'] and LP2['wafer_id_list']:
-                if LP2['wafer_id_list'][0]%2 == 1:
-                    if LP is None or LP['wafer_id_list'][0] > LP2['wafer_id_list'][0]:
-                        LP = LP2
-            if not LP3['unload_type'] and not LP3['load_use'] and LP3['wafer_id_list']:
-                if LP3['wafer_id_list'][0]%2 == 1:
-                    if LP is None or LP['wafer_id_list'][0] > LP3['wafer_id_list'][0]:
-                        LP = LP3
-        else:
-            if not LP1['unload_type'] and not LP1['load_use'] and LP1['wafer_id_list']:
-                LP = LP1
-            if not LP2['unload_type'] and not LP2['load_use'] and LP2['wafer_id_list']:
-                if LP is None or LP['wafer_id_list'][0] > LP2['wafer_id_list'][0]:
-                    LP = LP2
-            if not LP3['unload_type'] and not LP3['load_use'] and LP3['wafer_id_list']:
-                if LP is None or LP['wafer_id_list'][0] > LP3['wafer_id_list'][0]:
-                    LP = LP3
+        if not LP1['unload_type'] and not LP1['load_use'] and LP1['wafer_id_list']:
+            LP = LP1
+        if not LP2['unload_type'] and not LP2['load_use'] and LP2['wafer_id_list']:
+            if LP is None or LP['wafer_id_list'][0] > LP2['wafer_id_list'][0]:
+                LP = LP2
+        if not LP3['unload_type'] and not LP3['load_use'] and LP3['wafer_id_list']:
+            if LP is None or LP['wafer_id_list'][0] > LP3['wafer_id_list'][0]:
+                LP = LP3
         return LP
 
     def judge_LP_place_one(self, LP):

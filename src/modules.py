@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# import datetime
 
 Time_format = "%Y/%m/%d %H:%M:%S"
-# Real_time = datetime.datetime.now()
 
 LP1, LP2, LP3 = ({
     "name": "LP%d" % i,
@@ -155,12 +153,3 @@ Path2 = Path1[:8] + [
 ]
 
 Path = [Path2, Path1]
-
-
-if __name__ == "__main__":
-    print(ATR)
-    print(VTR_1)
-    print(VTR_2)
-    print(Path1)
-    print(Path2)
-    # print(LP2['name'] in Path1[0])

@@ -14,7 +14,7 @@ if __name__ == '__main__':
     """
     pro = Processing()
     result_list = pro.solve()
-    with open(RES_PATH + "result.txt", "w") as f:
+    with open(os.path.join(RES_PATH, "result.txt"), "w") as f:
         f.writelines("\n".join(result_list))
 
     ###############
