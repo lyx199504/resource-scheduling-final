@@ -1,6 +1,7 @@
 from src.llouter import LLOut
 from src.loadport import LoadPort
 from src.modules import *
+from src.output import Output
 
 
 class Robot(object):
@@ -185,14 +186,14 @@ class Robot(object):
                         mdl_name = ""
         if mdl_name:
             if pick:
-                result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
+                result_list.append(Output.instance().pick(real_time, r_name, id, mdl_name))
             else:
-                result_list.append("[%s] [%s] [Place] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), r_name, id, mdl_name))
+                result_list.append(Output.instance().place(real_time, r_name, id, mdl_name))
                 if LLOuter_start:
-                    result_list.append("[%s] [%s] [Start]" % (real_time.strftime(Time_format), mdl_name))
+                    result_list.append(Output.instance().LLOuter_start(real_time, mdl_name))
         return mdl_name
 
-    #
+    # 机械臂策略
     def robot_strategy(self, pick_LP, real_time, result_list):
         # 先紧急pick和紧急place，再非紧急place
         ATR_mdl_name = self.robot_urgent_strategy(ATR, real_time, result_list)
@@ -346,11 +347,11 @@ class Robot(object):
                     pick_LP_done = True
 
         if ATR_mdl_name and ATR_output:
-            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), atr['name'], atr['wafer_id'], ATR_mdl_name))
+            result_list.append(Output.instance().pick(real_time, atr['name'], atr['wafer_id'], ATR_mdl_name))
         if VTR1_mdl_name and VTR1_output:
-            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr1['name'], vtr1['wafer_id'], VTR1_mdl_name))
+            result_list.append(Output.instance().pick(real_time, vtr1['name'], vtr1['wafer_id'], VTR1_mdl_name))
         if VTR2_mdl_name and VTR2_output:
-            result_list.append("[%s] [%s] [Pick] [Wafer_%d] [%s]" % (real_time.strftime(Time_format), vtr2['name'], vtr2['wafer_id'], VTR2_mdl_name))
+            result_list.append(Output.instance().pick(real_time, vtr2['name'], vtr2['wafer_id'], VTR2_mdl_name))
 
         return pick_LP_done
 

@@ -1,5 +1,7 @@
 
 from src.modules import *
+from src.output import Output
+
 
 class LoadPort(object):
     _instance = None
@@ -28,7 +30,7 @@ class LoadPort(object):
                 Wafer_list[i]['index'] = 0
         LP['load_use'] = True
         if LP['wafer_id_list']:
-            result_list.append("[%s] [%s] [Load]" % (real_time.strftime(Time_format), LP['name']))
+            result_list.append(Output.instance().LP_load(real_time, LP['name']))
 
     # 装载策略，两个装载，一个卸载，只要至少有两个空就装载
     def LP_load_strategy(self, real_time, result_list):
@@ -53,7 +55,7 @@ class LoadPort(object):
     # LP卸载
     def LP_unload(self, LP, real_time, result_list):
         LP['unload_use'] = True
-        result_list.append("[%s] [%s] [Unload]" % (real_time.strftime(Time_format), LP['name']))
+        result_list.append(Output.instance().LP_unload(real_time, LP['name']))
         return True
 
     # 卸载策略，有加工完且满了就卸载

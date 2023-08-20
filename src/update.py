@@ -1,5 +1,7 @@
 
 from src.modules import *
+from src.output import Output
+
 
 class UpdateModules(object):
     _instance = None
@@ -56,7 +58,7 @@ class UpdateModules(object):
             LLOuter['run_time'] += 1
         if LLOuter['use'] and (LLOuter['out_type'] and LLOuter['run_time'] == LLOuter['out_time']
                                or not LLOuter['out_type'] and LLOuter['run_time'] == LLOuter['in_time']):
-            result_list.append("[%s] [%s] [Stop]" % (real_time.strftime(Time_format), LLOuter['name']))
+            result_list.append(Output.instance().LLOuter_stop(real_time, LLOuter['name']))
             LLOuter['use'] = False
 
     def update_robot(self, r):
