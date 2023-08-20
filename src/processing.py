@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import datetime
+import json
 
+from src.modules import *
 from src.loadport import LoadPort
 from src.robot import Robot
 from src.update import UpdateModules
@@ -19,6 +21,13 @@ class Processing(object):
 
         result_list = []
 
+        if os.path.exists(Interval_time_path):
+            with open(Interval_time_path, "r") as f:
+                INTERVAL['list'] = json.load(f)
+        else:
+            INTERVAL['list'] = [Interval_time] * 500
+        INTERVAL['ix'] = 0
+
         while self.wafer_num:
             # 先更新所有模块的运行时间等的数据
             UpdateModules.instance().update(self.real_time, result_list)
@@ -27,7 +36,9 @@ class Processing(object):
             LoadPort.instance().LP_load_strategy(self.real_time, result_list)
 
             # 每组两个晶圆，间隔取下一组
-            if (self.real_time - pick_LP_time).seconds >= 65:
+            if (self.real_time - pick_LP_time).seconds >= INTERVAL['list'][INTERVAL['ix']]:
+                if INTERVAL['ix'] < 500 - 1:
+                    INTERVAL['ix'] += 1
                 pick_LP = True
                 pick_LP_again = True
 

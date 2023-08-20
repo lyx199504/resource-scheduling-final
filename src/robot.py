@@ -1,3 +1,5 @@
+import json
+
 from src.llouter import LLOut
 from src.loadport import LoadPort
 from src.modules import *
@@ -110,7 +112,13 @@ class Robot(object):
                 PM25['wafer_id'] = id
                 mdl_name = PM25['name']
             else:
-                raise
+                print(PM25)
+                print(INTERVAL['ix'])
+                assert INTERVAL['ix'] != 0, "全局变量未初始化"
+                INTERVAL['list'][int(id/2)-2] += 1
+                with open(Interval_time_path, "w") as f:
+                    json.dump(INTERVAL['list'], f)
+                assert 0, "PM25"
         else:
             raise
         Wafer_list[id]['index'] += 1

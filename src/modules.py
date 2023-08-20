@@ -1,7 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 
 Time_format = "%Y/%m/%d %H:%M:%S"
+
+Interval_time = 60
+Interval_time_path = os.path.join(os.path.dirname(__file__), "interval_time_%d.json" % Interval_time)
+INTERVAL = {
+    "list": [],
+    "ix": 0,
+}
 
 LP1, LP2, LP3 = ({
     "name": "LP%d" % i,
