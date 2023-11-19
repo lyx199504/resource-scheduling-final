@@ -1,4 +1,4 @@
-# resource_scheduling-final
+# resource-scheduling-final
 本项目提供了一种基于排队论和贪心思想的芯片制作工艺的晶圆调度方案，该方案是《首届全国工业互联网创新大赛》赛题四“产品生产资源调度优化”决赛第一名的参赛作品。
 
 ## 目录 Table of Contents
@@ -26,6 +26,6 @@
 
 本项目的作者及单位：<br>
 
-    项目名称：resource_scheduling-final
+    项目名称：resource-scheduling-final
     项目作者：Yixiang Lu, Kaichuan Kong
     作者单位：暨南大学网络空间安全学院（College of Cyber Security, Jinan University）
